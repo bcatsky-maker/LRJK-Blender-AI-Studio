@@ -1,0 +1,13 @@
+# Developer / build-time tooling for LRJK Blender AI Studio.
+# Not needed to RUN the app - only to build it and to run the code-quality
+# gate (black · ruff --fix · mypy) that build_all.py / build_update.py invoke
+# before the unit tests. Install with:
+#     pip install -r dev-requirements.txt
+#
+# The build gate skips any tool that isn't installed, so these are optional;
+# install them to get formatting, linting, and type-checking on every build.
+
+pytest>=8.0
+black>=24.0
+ruff>=0.5
+mypy>=1.10

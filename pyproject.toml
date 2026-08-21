@@ -1,0 +1,70 @@
+# =====================================================================
+# Tooling config for LRJK Blender AI Studio.
+# Code-quality gate used by the build pipeline (build_all.py /
+# build_update.py) and runnable by hand:
+#     black .            # format
+#     ruff check --fix . # lint + autofix
+#     mypy .             # type-check
+# =====================================================================
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+# The Blender add-on runs inside Blender's own bundled Python; still safe
+# to format, but never touch generated / vendored / build output.
+extend-exclude = '''
+/(
+    build
+  | dist
+  | Release_Installers
+  | updates
+  | assets/runtime_cache
+  | \.venv
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["build", "dist", "Release_Installers", "updates", "assets"]
+
+[tool.ruff.lint]
+# A pragmatic set: pycodestyle (E/W), pyflakes (F), isort (I), bugbear (B),
+# and pyupgrade (UP). Line length is owned by black, so E501 is off here.
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "E501",   # line length -> black's job
+    "B008",   # function call in default arg (common + intentional in Qt code)
+    "E741",   # ambiguous var name (l/I) - a few short locals, not worth churn
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests deliberately import after a module-level docstring/patch setup, and
+# re-import helpers mid-file next to the tests that use them.
+"tests/*" = ["E402", "F811"]
+# Blender add-ons MUST declare `bl_info = {...}` before any imports (Blender
+# reads it without importing the module), so imports are legitimately not at
+# the top of the file.
+"src/blender_addon/*" = ["E402"]
+
+[tool.mypy]
+python_version = "3.11"
+# This is a GUI + Blender codebase with many dynamically-typed 3rd-party
+# surfaces (PySide6, bpy). Keep mypy in "catch real bugs" mode - undefined
+# names, obviously-wrong types - without demanding full annotations.
+ignore_missing_imports = true
+check_untyped_defs = false
+disallow_untyped_defs = false
+warn_unused_ignores = false
+warn_redundant_casts = true
+no_implicit_optional = true
+# The project uses a `src/` layout with no __init__.py files (implicit
+# namespace packages, imported as `src.core.*`). Without these, `mypy .`
+# sees e.g. src/core/paths.py as both "paths" and "src.core.paths" and
+# aborts. This pins the project root as the single package base.
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "."
+# The add-on only type-checks meaningfully inside Blender (bpy present); the
+# build output / feed dirs are not source.
+exclude = '(^|/)(build|dist|Release_Installers|updates)/|src/blender_addon/'
